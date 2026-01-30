@@ -1,0 +1,75 @@
+image:
+  name: registry.gitlab.com/gitlab-org/gitlab-build-images:terraform
+  entrypoint:
+    - '/usr/bin/env'
+    - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+
+variables:
+  TF_VERSION: "1.5.0"
+  AWS_ACCESS_KEY_ID: ${MY_AWS_KEY}
+  AWS_SECRET_ACCESS_KEY: ${MY_AWS_ACCESS_KEY}
+  AWS_DEFAULT_REGION: "ap-south-1"
+  TF_VAR_aws_access_key_id: ${MY_AWS_KEY}
+  TF_VAR_aws_secret_access_key: ${MY_AWS_ACCESS_KEY}
+  TF_VAR_s3_bucket_name: ${APP_S3_BUCKET_NAME}
+
+cache:
+  paths:
+    - .terraform
+    - .terraform.lock.hcl
+
+before_script:
+  - terraform --version
+  - terraform init -backend-config="tfstate.config"
+
+stages:
+  - validate
+  - plan
+  - apply
+  - destroy
+
+validate:
+  stage: validate
+  script:
+    - terraform validate
+    - terraform fmt -check -recursive
+  allow_failure: false
+
+plan:
+  stage: plan
+  script:
+    - terraform plan -out="planfile" -var-file="terraform.tfvars"
+  dependencies:
+    - validate
+  artifacts:
+    paths:
+      - planfile
+      - .terraform.lock.hcl
+    expire_in: 7 days
+  only:
+    - merge_requests
+    - main
+
+apply:
+  stage: apply
+  script:
+    - terraform apply -input=false "planfile"
+  dependencies:
+    - plan
+  when: manual
+  only:
+    - main
+  environment:
+    name: production
+    action: prepare
+
+destroy:
+  stage: destroy
+  script:
+    - terraform destroy --auto-approve -var-file="terraform.tfvars"
+  when: manual
+  only:
+    - main
+  environment:
+    name: production
+    action: stop

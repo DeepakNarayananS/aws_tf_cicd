@@ -1,0 +1,21 @@
+# AWS Configuration
+region     = "us-east-1"
+environment = "dev"
+
+# IAM User Credentials (reference existing keys)
+# DO NOT commit actual credentials to version control
+# Use environment variables or AWS credentials file instead
+# aws_access_key_id     = "YOUR_ACCESS_KEY_ID"
+# aws_secret_access_key = "YOUR_SECRET_ACCESS_KEY"
+
+# EC2 Configuration
+ec2_ami_id       = "ami-0440d3b780d96b29d"
+ec2_instance_type = "t2.micro"
+
+# S3 Configuration
+s3_bucket_name = "app-data-bucket-unique-name"
+
+# VPC Configuration
+vpc_cidr              = "10.0.0.0/16"
+public_subnet_cidr    = "10.0.1.0/24"
+allowed_ssh_cidr      = "0.0.0.0/0"
